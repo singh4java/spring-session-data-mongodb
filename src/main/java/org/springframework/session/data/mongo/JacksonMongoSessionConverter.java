@@ -17,13 +17,14 @@ package org.springframework.session.data.mongo;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.bson.Document;
-
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.security.jackson2.SecurityJackson2Modules;
 import org.springframework.session.FindByIndexNameSessionRepository;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -85,7 +86,25 @@ public class JacksonMongoSessionConverter extends AbstractMongoSessionConverter 
 
 		objectMapper.setPropertyNamingStrategy(new MongoIdNamingStrategy());
 
+		objectMapper.registerModules(SecurityJackson2Modules.getModules(getClass().getClassLoader()));
+		objectMapper.addMixIn(MongoSession.class, MongoSessionMixin.class);
+		objectMapper.addMixIn(HashMap.class, HashMapMixin.class);
+
 		return objectMapper;
+	}
+
+	/**
+	 * Used to whitelist {@link MongoSession} for {@link SecurityJackson2Modules}.
+	 */
+	private static class MongoSessionMixin {
+		// Nothing special
+	}
+
+	/**
+	 * Used to whitelist {@link HashMap} for {@link SecurityJackson2Modules}.
+	 */
+	private static class HashMapMixin {
+		// Nothing special
 	}
 
 	@Override
@@ -109,7 +128,7 @@ public class JacksonMongoSessionConverter extends AbstractMongoSessionConverter 
 			return this.objectMapper.readValue(json, MongoSession.class);
 		} catch (IOException e) {
 			LOG.error("Error during Mongo Session deserialization", e);
-			return null;
+			throw new RuntimeException(e);
 		}
 	}
 
