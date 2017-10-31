@@ -128,7 +128,7 @@ public class JacksonMongoSessionConverter extends AbstractMongoSessionConverter 
 			return this.objectMapper.readValue(json, MongoSession.class);
 		} catch (IOException e) {
 			LOG.error("Error during Mongo Session deserialization", e);
-			throw new RuntimeException(e);
+			return null;
 		}
 	}
 
